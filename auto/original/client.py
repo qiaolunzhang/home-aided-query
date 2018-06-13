@@ -35,6 +35,7 @@ class Client:
 
 
     def __init__(self, config_path):
+        self.request_times = 0
         self.time_list = []
         self.time_start = time.time()
         self.time_end = time.time()
@@ -46,6 +47,11 @@ class Client:
         self.connections = [] # collects all the incoming connections
         self.load_config(config_path)
         print("Loading config complete")
+
+        self.time_clock_start = time.clock()
+        self.time_clock_end = time.clock()
+        self.time_clock_total = self.time_clock_end - self.time_clock_start
+
         self._run()
 
 
@@ -143,16 +149,65 @@ class Client:
     def _process_packet_aid_reply(self, sock, content_name, content):
         pass
 
+
     def _process_packet_aid_query(self, sock, content_name, content):
         pass
 
 
+    def _find_best_point(self, points, original_content_name, best_point):
+        """
+        points: 3.0|3.0|5.0|5.0|4.0|5.0|5.0|3.0
+        """
+        original_content_name = original_content_name.split('|')
+        x = float(original_content_name[0])
+        y = float(original_content_name[1])
+        z = float(original_content_name[2])
+
+        points = points.split('|')
+        num_points = len(points) / 2
+        for i in range(num_points):
+            distance_best = (best_point[0] - x) * (best_point[0] - x) + (best_point[1] - y) * (best_point[1] - y)
+            index = 2 * i
+            x_tmp = float(points[index])
+            y_tmp = float(points[index+1])
+            distance_now = (x_tmp-x)*(x_tmp-x) + (y_tmp - y) * (y_tmp - y)
+            if distance_now <= distance_best:
+                best_point[0] = x_tmp
+                best_point[1] = y_tmp
+        return best_point
+
+
+    def _find_best_point(self, points, original_content_name, best_point):
+        """
+        points: 3.0|3.0|5.0|5.0|4.0|5.0|5.0|3.0
+        """
+        original_content_name = original_content_name.split('|')
+        x = float(original_content_name[0])
+        y = float(original_content_name[1])
+        z = float(original_content_name[2])
+
+        points = points.split('|')
+        num_points = len(points) / 2
+        for i in range(num_points):
+            distance_best = (best_point[0] - x) * (best_point[0] - x) + (best_point[1] - y) * (best_point[1] - y)
+            index = 2 * i
+            x_tmp = float(points[index])
+            y_tmp = float(points[index+1])
+            distance_now = (x_tmp-x)*(x_tmp-x) + (y_tmp - y) * (y_tmp - y)
+            if distance_now <= distance_best:
+                best_point[0] = x_tmp
+                best_point[1] = y_tmp
+        return best_point
+
+
     def _process_packet_data(self, sock, content_name, content):
         print("Succeed to get back data packet")
+        best_point = [0, 0]
+        best_point = self._find_best_point(content_name, content_name, best_point)
         try:
             print("Get the data: ")
             # 解码成utf-8才能正常显示
-            print(content.decode('utf-8'))
+            print(best_point)
         except Exception, e:
             print(Exception, ", ", e)
 
@@ -176,21 +231,38 @@ class Client:
         if typ_content == 1:
             self._process_packet_interest(sock, content_name, content)
         elif typ_content == 2:
-            self.time_end = time.time()
             self._process_packet_data(sock, content_name, content)
         elif typ_content == 3:
             self._process_packet_aid_query(sock, content_name, content)
         elif typ_content == 4:
             self._process_packet_aid_reply(sock, content_name, content)
 
+        self.time_end = time.time()
+        self.time_clock_end = time.clock()
+        self.time_clock_total = self.time_clock_end - self.time_clock_start
+        print("The total cpu execution time is: ", self.time_clock_total)
+
         time_used = self.time_end - self.time_start
-        print("the time of this query is: ", time_used)
         self.time_list.append(time_used)
         time_total = 0
         for i in self.time_list:
             time_total += i
-        time_average = time_total / len(self.time_list)
+        # 减掉第一次的
+        if len(self.time_list) > 1:
+            time_average = time_total / (len(self.time_list)-1)
+        else:
+            time_average = self.time_list[0]
+        self.request_times = self.request_times + 1
+        print("the time of "+ str(self.request_times) + "th query is: ", time_used)
         print("the average of query is: ", time_average)
+        if self.request_times == 1:
+            self.time_start = time.time()
+            self.time_clock_start = time.clock()
+        if self.request_times < 11:
+            packet = get_packet_request(content_name, "", 1)
+            self.server_socket.send(packet)
+        else:
+            self.request_times = 0
         print("*******************************************************************************")
 
 
