@@ -4,6 +4,7 @@ import socket
 import struct
 import os
 from datetime import datetime
+import time
 
 import utils
 
@@ -73,6 +74,7 @@ class BaseServer:
 
     def __init__(self, config_file):
         # 用于保存文件名
+        self.request_times = 0
         self.points = []
         self.load_points()
         self.host = ''
@@ -83,6 +85,9 @@ class BaseServer:
         self.sock_to_ip_dic = {}
         self.load_config(config_file)
         print("loading config complete.")
+        self.time_clock_start = time.clock()
+        self.time_clock_end = time.clock()
+        self.time_clock_total = self.time_clock_end - self.time_clock_start
         self._run()
 
 
@@ -301,6 +306,17 @@ class BaseServer:
         elif typ_content == 4:
             self._process_packet_aid_reply(sock, content_name, content)
 
+        self.request_times = self.request_times + 1
+        if self.request_times == 1:
+            self.time_clock_start = time.clock()
+
+
+        self.time_clock_end = time.clock()
+        self.time_clock_total = self.time_clock_end - self.time_clock_start
+        print("The average cpu execution time is: ", self.time_clock_total / (self.request_times-1))
+
+        if self.request_times >= 11:
+            self.request_times = 0
         print("*******************************************************************************")
 
 

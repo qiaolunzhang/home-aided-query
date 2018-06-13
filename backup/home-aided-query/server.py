@@ -4,7 +4,6 @@ import socket
 import struct
 import os
 from datetime import datetime
-import time
 
 import utils
 
@@ -84,9 +83,6 @@ class BaseServer:
         self.sock_to_ip_dic = {}
         self.load_config(config_file)
         print("loading config complete.")
-        self.time_clock_start = time.clock()
-        self.time_clock_end = time.clock()
-        self.time_clock_total = self.time_clock_end - self.time_clock_start
         self._run()
 
 
@@ -304,10 +300,6 @@ class BaseServer:
             self._process_packet_aid_query(sock, content_name, content)
         elif typ_content == 4:
             self._process_packet_aid_reply(sock, content_name, content)
-
-        self.time_clock_end = time.clock()
-        self.time_clock_total = self.time_clock_end - self.time_clock_start
-        print("The total cpu execution time is: ", self.time_clock_total)
 
         print("*******************************************************************************")
 

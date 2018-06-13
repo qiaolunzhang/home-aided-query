@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 
 import utils
+import time
 
 
 def generate_points(x, y, R):
@@ -73,6 +74,7 @@ class BaseServer:
 
     def __init__(self, config_file):
         # 用于保存文件名
+        self.request_times = 0
         self.points = []
         self.load_points()
         self.host = ''
@@ -83,6 +85,10 @@ class BaseServer:
         self.sock_to_ip_dic = {}
         self.load_config(config_file)
         print("loading config complete.")
+        self.time_clock_start = time.clock()
+        self.time_clock_end = time.clock()
+        self.time_clock_total = self.time_clock_end - self.time_clock_start
+
         self._run()
 
 
@@ -222,8 +228,11 @@ class BaseServer:
             message.append(points)
         message = ';'.join(message)
         message = get_packet_request(content_name, message, 2)
+        print("now send the packet back")
+        len_message = len(message)
+        len_packet = 1024
+        len_send = 0
         sock.send(message)
-
 
     def _process_packet_aid(self, sock, data_origin, data):
         """
@@ -292,14 +301,31 @@ class BaseServer:
         print "The content is: ",
         print content.decode('utf-8')
 
-        if typ_content == 1:
-            self._process_packet_interest(sock, content_name, content)
-        elif typ_content == 2:
-            self._process_packet_data(sock, content_name, content)
-        elif typ_content == 3:
-            self._process_packet_aid_query(sock, content_name, content)
-        elif typ_content == 4:
-            self._process_packet_aid_reply(sock, content_name, content)
+        try:
+            if typ_content == 1:
+                self._process_packet_interest(sock, content_name, content)
+            elif typ_content == 2:
+                self._process_packet_data(sock, content_name, content)
+            elif typ_content == 3:
+                self._process_packet_aid_query(sock, content_name, content)
+            elif typ_content == 4:
+                self._process_packet_aid_reply(sock, content_name, content)
+        except Exception, e:
+            print(Exception, ", ", e)
+
+
+        print("Succeed to send back data packet")
+        self.request_times = self.request_times + 1
+        # @todo if has cache， need to uncomment it
+        #if self.request_times == 1:
+        #    self.time_clock_start = time.clock()
+
+        self.time_clock_end = time.clock()
+        self.time_clock_total = self.time_clock_end - self.time_clock_start
+        print("The total cpu execution time is: ", self.time_clock_total)
+        if self.request_times >= 11:
+            self.request_times = 0
+        self.time_clock_start = time.clock()
 
         print("*******************************************************************************")
 

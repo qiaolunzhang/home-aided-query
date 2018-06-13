@@ -8,6 +8,7 @@ import math
 import random
 
 import utils
+import time
 
 
 def generate_points(x, y, R):
@@ -77,6 +78,7 @@ class BaseServer:
 
     def __init__(self, config_file):
         # 用于保存文件名
+        self.request_times = 0
         self.message_points_list = ['', '', '']
         self.content_name_dic = {}
         self.new_content_name_dic = {}
@@ -211,6 +213,9 @@ class BaseServer:
             # @todo remove the following line
             message = self.cs_dic[content_name]
             message = get_packet_request(content_name, message, 4)
+            #message = self.content_name_dic[content_name]
+            #message = get_packet_request(message, "", 3)
+
         else:
             message = generate_three_points(x, y, r)
             # content_name对应新的content_name
@@ -286,7 +291,7 @@ class BaseServer:
             self.sock_to_ip_dic[sock_client] = self.router_host
             self.connections.append(sock_client)
             sock_client.send(message)
-        # @todo message需要改成点
+        # @todo 作为是否开启缓存
         self.cs_dic[self.new_content_name_dic[content_name]] = best_point
 
 
@@ -314,6 +319,22 @@ class BaseServer:
             self._process_packet_aid_query(sock, content_name, content)
         elif typ_content == 4:
             self._process_packet_aid_reply(sock, content_name, content)
+
+        if typ_content == 1:
+            self.request_times = self.request_times + 1
+        if self.request_times == 1:
+            self.time_clock_start = time.clock()
+
+        self.time_end = time.time()
+        self.time_clock_end = time.clock()
+
+        self.time_clock_total = self.time_clock_end - self.time_clock_start
+        if self.request_times > 1:
+            print("The cpu execution time is: ", self.time_clock_total)
+
+        if self.request_times >= 11:
+            self.request_times = 0
+            self.time_start = time.time()
 
         print("*******************************************************************************")
 

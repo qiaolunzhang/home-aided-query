@@ -211,9 +211,6 @@ class BaseServer:
             # @todo remove the following line
             message = self.cs_dic[content_name]
             message = get_packet_request(content_name, message, 4)
-            #message = self.content_name_dic[content_name]
-            #message = get_packet_request(message, "", 3)
-
         else:
             message = generate_three_points(x, y, r)
             # content_name对应新的content_name
@@ -289,7 +286,7 @@ class BaseServer:
             self.sock_to_ip_dic[sock_client] = self.router_host
             self.connections.append(sock_client)
             sock_client.send(message)
-        # @todo 作为是否开启缓存
+        # @todo message需要改成点
         self.cs_dic[self.new_content_name_dic[content_name]] = best_point
 
 
