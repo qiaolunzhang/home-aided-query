@@ -229,9 +229,6 @@ class BaseServer:
         message = ';'.join(message)
         message = get_packet_request(content_name, message, 2)
         print("now send the packet back")
-        len_message = len(message)
-        len_packet = 1024
-        len_send = 0
         sock.send(message)
 
     def _process_packet_aid(self, sock, data_origin, data):

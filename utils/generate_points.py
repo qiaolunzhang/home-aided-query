@@ -21,9 +21,9 @@ def generate_points(x, y, R):
         f.write('\n')
 
 for i in range(10):
-    for i in range(1, 11):
-        generate_points(5, 5, i)
+    for j in range(1, 6):
+        generate_points(5, 5, j)
 
-for i in range(100):
-    for i in range(11, 20):
+for i in range(45):
+    for i in range(11, 21):
         generate_points(5, 5, i)
